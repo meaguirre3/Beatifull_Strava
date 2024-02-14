@@ -5,7 +5,7 @@ import gpxpy.gpx
 import polyline
 from shapely.geometry import Polygon, Point
 
-def read_gpx_file(path):
+def read_gpx_file(gpx_file):
     """
     Reads a GPX (GPS Exchange Format) file and extracts latitude, longitude, and elevation information.
 
@@ -15,8 +15,7 @@ def read_gpx_file(path):
     Returns:
     - pandas.DataFrame: A DataFrame containing extracted information from the GPX file.
     """
-    with open(path, 'r') as gpx_file:
-        gpx = gpxpy.parse(gpx_file)
+    gpx = gpxpy.parse(gpx_file)
     # extract in gpx file latitude, longitude  and elevation
     route_info = [{'latitude': point.latitude,'longitude': point.longitude,'elevation': point.elevation} 
                   for track   in gpx.tracks  
