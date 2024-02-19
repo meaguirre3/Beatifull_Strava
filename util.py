@@ -149,3 +149,50 @@ def edge_line_color(G):
         roadWidths.append(linewidth)
 
     return roadWidths, roadColors
+def linewidth(G):
+    """
+    Generate lists of edge widths and a constant color based on characteristics of the graph edges.
+
+    Parameters:
+    - G (networkx.Graph): The graph for which edge characteristics are to be determined.
+
+    Returns:
+    Tuple: A tuple containing two lists - `roadWidths` and `roadColors`.
+        - `roadWidths` (list): List of edge widths corresponding to the edges in the graph.
+    """
+    # Define data characteristics
+    u = []
+    v = []
+    key = []
+    data = []
+    
+    # Extract edge data
+    for uu, vv, kkey, ddata in G.edges(keys=True, data=True):
+        u.append(uu)
+        v.append(vv)
+        key.append(kkey)
+        data.append(ddata)
+    
+    roadWidths = []
+
+    for item in data:
+        if "length" in item.keys():
+            if item["length"] <= 100:
+                linewidth = 0.10
+            elif 100 < item["length"] <= 200:
+                linewidth = 0.15
+            elif 200 < item["length"] <= 400:
+                linewidth = 0.25
+            elif 400 < item["length"] <= 800:
+                linewidth = 0.35
+            else:
+                linewidth = 0.45
+
+            if "primary" in item.get("highway", ""):
+                linewidth = 0.5
+        else:
+            linewidth = 0.10
+
+        roadWidths.append(linewidth)
+
+    return roadWidths
