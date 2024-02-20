@@ -79,8 +79,7 @@ def fig_to_bytes(fig, format='png'):
 
 
 if uploaded_file is not None:
-   
-   name_file  = title+".png"
+   name_file  = "ruta_gpx"+".png"
 # Assuming you have a figure 'fig' already defined
    png_data = fig_to_bytes(fig, format='png')
 
