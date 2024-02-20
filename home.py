@@ -19,29 +19,6 @@ col1, col2, col3 , col4 ,col5= st.columns(5)
 figure = st.pyplot()
 fig = None
 
-def on_color_change():
-    if uploaded_file is not None:
-      update_fig()
-
-with col1:
-   colorBackground   = st.color_picker('Background Color', "#06152A", on_change = on_color_change)
-   #st.session_state.prev_color = colorBackground
-
-with col2:
-   colorLines   = st.color_picker('Lines Color', "#9DA5D9", on_change = on_color_change)
-
-with col3:
-   colorRoute  = st.color_picker('Route Color', "#E64E25", on_change = on_color_change)
-
-with col4:
-   colorText   = st.color_picker('Text Color', '#00f900', on_change = on_color_change)
-
-with col5:
-   title  = st.text_input('Title of Route', 'Title',on_change = on_color_change )
-
-# Crea una figura 
-
-route_df = None
 
 
 def update_fig():
@@ -49,6 +26,31 @@ def update_fig():
    fig = ut.plot_figure(global_variable , route_df ,colorBackground , 
                          colorLines,colorRoute,title,colorText )
    figure.pyplot(fig)
+
+
+def on_color_change():
+    if uploaded_file is not None:
+      update_fig()
+
+with col1:
+   colorBackground   = st.color_picker('Background Color', "#FFFFFF", on_change = on_color_change)
+   #st.session_state.prev_color = colorBackground
+
+with col2:
+   colorLines   = st.color_picker('Lines Color', "#000000", on_change = on_color_change)
+
+with col3:
+   colorRoute  = st.color_picker('Route Color', "#E64E25", on_change = on_color_change)
+
+with col4:
+   colorText   = st.color_picker('Text Color', '#000000', on_change = on_color_change)
+
+with col5:
+   title  = st.text_input('Title of Route', 'Title',on_change = on_color_change )
+
+# Crea una figura 
+
+route_df = None
 
 def read_route(file):
     global route_df
@@ -87,5 +89,6 @@ if uploaded_file is not None:
       file_name=name_file,
       mime="image/png"
    )
+
 
 
