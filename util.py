@@ -200,6 +200,7 @@ def linewidth(G):
 
 def plot_figure(global_variable , route_df ,colorBackground , colorLines,colorRoute,title,colorText ):
 
+    linewidth = linewidth(global_variable)
     fig, ax = ox.plot_graph(global_variable, node_size=0,
                         figsize        = (27, 40), 
                         dpi            = 300,
@@ -207,7 +208,8 @@ def plot_figure(global_variable , route_df ,colorBackground , colorLines,colorRo
                         bgcolor        = colorBackground,
                         edge_color     = colorLines,
                         edge_alpha     = 1 ,
-                        show           = False)
+                        show           = False,
+                        edge_linewidth = linewidth)
     
 ## Plot  activity in graph 
     ax.plot( route_df['longitude'] , route_df['latitude'] ,
