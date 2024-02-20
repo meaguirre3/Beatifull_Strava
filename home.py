@@ -66,6 +66,7 @@ def read_route(file):
 if uploaded_file is not None:
     # To read file as bytes:
    read_route(uploaded_file)
+   print("go")
 
 name_file  = title+".png"
 # Create the download button
