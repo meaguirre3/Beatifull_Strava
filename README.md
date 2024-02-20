@@ -1,4 +1,4 @@
-# Beatifull Strava Route
+# Beatiful Strava Route
 
 This Python application utilizes the Strava gpx route data visualizes it using OSMnx.
 
