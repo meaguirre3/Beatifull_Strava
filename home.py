@@ -43,6 +43,13 @@ with col5:
 
 route_df = None
 
+
+def update_fig():
+   global fig
+   fig = ut.plot_figure(global_variable , route_df ,colorBackground , 
+                         colorLines,colorRoute,title,colorText )
+   figure.pyplot(fig)
+
 def read_route(file):
     global route_df
     route_df  = ut.read_gpx_file(file)
@@ -81,8 +88,4 @@ if uploaded_file is not None:
       mime="image/png"
    )
 
-def update_fig():
-   global fig
-   fig = ut.plot_figure(global_variable , route_df ,colorBackground , 
-                         colorLines,colorRoute,title,colorText )
-   figure.pyplot(fig)
+
