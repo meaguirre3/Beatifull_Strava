@@ -196,3 +196,26 @@ def linewidth(G):
         roadWidths.append(linewidth)
 
     return roadWidths
+
+
+def plot_figure(global_variable , route_df ,colorBackground , colorLines,colorRoute,title,colorText ):
+
+    fig, ax = ox.plot_graph(global_variable, node_size=0,
+                        figsize        = (27, 40), 
+                        dpi            = 300,
+                        save           = False,
+                        bgcolor        = colorBackground,
+                        edge_color     = colorLines,
+                        edge_alpha     = 1 ,
+                        show           = False)
+    
+## Plot  activity in graph 
+    ax.plot( route_df['longitude'] , route_df['latitude'] ,
+               color     = colorRoute , 
+               linewidth = 4.0)
+      #bbox={'facecolor': '#415DC0', 'edgecolor': '#415DC0', 'pad': 5}
+    ax.text(0.5, 0.03, title, ha='center', 
+            va='center', transform=ax.transAxes, fontsize=40 ,color = colorText,
+            bbox=dict(facecolor=colorBackground , edgecolor = colorBackground, alpha=0.5))
+
+    return fig
