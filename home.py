@@ -18,11 +18,6 @@ col1, col2, col3 , col4 ,col5= st.columns(5)
 
 figure = st.pyplot()
 fig = None
-def update_fig():
-   global fig
-   fig = ut.plot_figure(global_variable , route_df ,colorBackground , 
-                         colorLines,colorRoute,title,colorText )
-   figure.pyplot(fig)
 
 def on_color_change():
     if uploaded_file is not None:
@@ -85,3 +80,9 @@ if uploaded_file is not None:
       file_name=name_file,
       mime="image/png"
    )
+
+def update_fig():
+   global fig
+   fig = ut.plot_figure(global_variable , route_df ,colorBackground , 
+                         colorLines,colorRoute,title,colorText )
+   figure.pyplot(fig)
