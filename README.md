@@ -29,9 +29,7 @@ This application serves the purpose of plotting GPX routes recorded on Strava on
 
 ## Usage
 
-1. Obtain Strava API credentials by creating a Strava API application.
-2. Set your Strava API credentials (client ID and client secret) in the `config.py` file.
-3. Run the application:
+1. Run the application:
 
     ```bash
     streamlit run home.py
