@@ -1,6 +1,6 @@
 # Beatiful Strava Route
 
-This Python application utilizes the Strava gpx route data visualizes it using OSMnx.
+This Python application utilizes the Strava GPX route data and visualizes it using OSMnx. An additional Plotly implementation is also provided for interactive maps.
 
 ## Overview
 
@@ -12,6 +12,7 @@ This application serves the purpose of plotting GPX routes recorded on Strava on
 - **GPX Parsing:** Parses GPX files fetched from Strava to extract route information.
 - **OSMnx Visualization:** Utilizes OSMnx library to plot routes onto OpenStreetMap.
 - **Interactive Interface:** Offers a user-friendly interface for selecting and displaying routes.
+- **Plotly Visualization:** `plotly_route.py` allows generating interactive maps using Plotly.
 
 ## Installation
 
@@ -31,9 +32,17 @@ This application serves the purpose of plotting GPX routes recorded on Strava on
 
 1. Run the application:
 
-    ```bash
+```bash
     streamlit run home.py
-    ```
+```
+
+### Plotly example
+
+To generate an interactive map of a GPX file using Plotly run:
+
+```bash
+python plotly_route.py <route.gpx>
+```
 
 ## Contributions
 
