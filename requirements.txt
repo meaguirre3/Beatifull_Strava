@@ -4,3 +4,4 @@ gpxpy
 polyline
 shapely
 pandas
+plotly

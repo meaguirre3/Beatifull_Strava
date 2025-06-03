@@ -4,6 +4,7 @@ import gpxpy
 import gpxpy.gpx
 import polyline
 from shapely.geometry import Polygon, Point
+import plotly.graph_objects as go
 
 def read_gpx_file(gpx_file):
     """
@@ -216,8 +217,53 @@ def plot_figure(global_variable , route_df ,colorBackground , colorLines,colorRo
                color     = colorRoute , 
                linewidth = 4.0)
       #bbox={'facecolor': '#415DC0', 'edgecolor': '#415DC0', 'pad': 5}
-    ax.text(0.5, 0.03, title, ha='center', 
+    ax.text(0.5, 0.03, title, ha='center',
             va='center', transform=ax.transAxes, fontsize=40 ,color = colorText,
             bbox=dict(facecolor=colorBackground , edgecolor = colorBackground, alpha=0.5))
+
+    return fig
+
+
+def plot_route_plotly(route_df, title="Strava Route", route_color="#E64E25"):
+    """Create a Plotly map of a Strava route.
+
+    Parameters
+    ----------
+    route_df : pandas.DataFrame
+        DataFrame with `latitude` and `longitude` columns.
+    title : str, optional
+        Title for the figure.
+    route_color : str, optional
+        Color of the route line.
+
+    Returns
+    -------
+    plotly.graph_objects.Figure
+        The generated Plotly figure.
+    """
+
+    center = {
+        "lat": route_df.latitude.mean(),
+        "lon": route_df.longitude.mean(),
+    }
+
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scattermapbox(
+            lon=route_df["longitude"],
+            lat=route_df["latitude"],
+            mode="lines",
+            line=dict(color=route_color, width=3),
+            name=title,
+        )
+    )
+
+    fig.update_layout(
+        mapbox_style="open-street-map",
+        mapbox_center=center,
+        mapbox_zoom=12,
+        title=title,
+        margin={"r": 0, "t": 40, "l": 0, "b": 0},
+    )
 
     return fig
