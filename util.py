@@ -2,222 +2,173 @@ import osmnx as ox
 import pandas as pd
 import gpxpy
 import gpxpy.gpx
-import polyline
 from shapely.geometry import Polygon, Point
 
 def read_gpx_file(gpx_file):
     """
     Reads a GPX (GPS Exchange Format) file and extracts latitude, longitude, and elevation information.
-
-    Parameters:
-    - path (str): The file path to the GPX file.
-
-    Returns:
-    - pandas.DataFrame: A DataFrame containing extracted information from the GPX file.
     """
     gpx = gpxpy.parse(gpx_file)
-    # extract in gpx file latitude, longitude  and elevation
-    route_info = [{'latitude': point.latitude,'longitude': point.longitude,'elevation': point.elevation} 
-                  for track   in gpx.tracks  
-                  for segment in track.segments 
-                  for point   in segment.points ]
-    # route_df Dataframe
-    route_df = pd.DataFrame(route_info)
-    
-    return route_df
-
+    route_info = [
+        {"latitude": point.latitude, "longitude": point.longitude, "elevation": point.elevation}
+        for track in gpx.tracks
+        for segment in track.segments
+        for point in segment.points
+    ]
+    return pd.DataFrame(route_info)
 
 
 def find_centroid(route):
     """
     Finds the centroid of a polygon defined by the coordinates of a route.
-
-    Parameters:
-    - route (DataFrame): A DataFrame containing the coordinates of the route.
-    
-    Returns:
-    Tuple: A tuple containing the coordinates (latitude, longitude) of the centroid of the polygon.
     """
-    # Crear un objeto de polígono con las coordenadas
-    poligono = Polygon(zip(route.longitude.values.tolist(), route.latitude.values.tolist()))
-
-    # Encontrar el centroide del polígono
-    centroide = poligono.centroid
-
-    # Obtener las coordenadas del centroide
-    centroide_latitud, centroide_longitud = centroide.y, centroide.x
-
-    return centroide_latitud, centroide_longitud
+    polygon = Polygon(zip(route.longitude.values.tolist(), route.latitude.values.tolist()))
+    centroid = polygon.centroid
+    return centroid.y, centroid.x
 
 
 def get_dist_graph(route, center):
     """
     Calculate the maximum distance from the specified center to the edges of the given route.
 
-    Parameters:
-    - route (DataFrame): A DataFrame containing the coordinates of the route.
-    - center (Tuple): A tuple containing the coordinates (latitude, longitude) of the center.
-
-    Returns:
-    float: The maximum distance from the center to any edge of the route, plus 500 meters.
+    This version is compatible with all OSMnx versions (<=1.2, 1.8.x, 1.9+).
     """
+    import osmnx as ox
+    import math
+
+    def great_circle(lat1, lon1, lat2, lon2):
+        """Fallback great circle distance in meters."""
+        R = 6371000  # Earth radius in meters
+        phi1, phi2 = math.radians(lat1), math.radians(lat2)
+        dphi = math.radians(lat2 - lat1)
+        dlambda = math.radians(lon2 - lon1)
+        a = math.sin(dphi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2
+        return 2 * R * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+    # Detect correct OSMnx function dynamically
+    if hasattr(ox, "distance") and hasattr(ox.distance, "great_circle_vec"):
+        func = ox.distance.great_circle_vec
+    elif hasattr(ox, "distance") and hasattr(ox.distance, "great_circle"):
+        func = ox.distance.great_circle
+    elif hasattr(ox, "utils_geo") and hasattr(ox.utils_geo, "great_circle_vec"):
+        func = ox.utils_geo.great_circle_vec
+    else:
+        func = great_circle  # fallback to pure math version
+
     dist = []
+    dist.append(func(center[0], center[1], route.latitude.max(), center[1]))
+    dist.append(func(center[0], center[1], center[0], route.longitude.max()))
+    dist.append(func(center[0], center[1], route.latitude.min(), center[1]))
+    dist.append(func(center[0], center[1], center[0], route.longitude.min()))
 
-    # Calculate distance to the top edge of the route
-    dist.append(ox.distance.great_circle_vec(center[0], center[1], route.latitude.max(), center[1]))
-
-    # Calculate distance to the right edge of the route
-    dist.append(ox.distance.great_circle_vec(center[0], center[1], center[0], route.longitude.max()))
-
-    # Calculate distance to the bottom edge of the route
-    dist.append(ox.distance.great_circle_vec(center[0], center[1], route.latitude.min(), center[1]))
-
-    # Calculate distance to the left edge of the route
-    dist.append(ox.distance.great_circle_vec(center[0], center[1], center[0], route.longitude.min()))
-
-    # Return the maximum distance plus 500 meters
     return max(dist) + 1000
+
 
 
 def edge_line_color(G):
     """
-    Generate lists of edge widths and colors based on characteristics of the graph edges.
-
-    Parameters:
-    - G (networkx.Graph): The graph for which edge characteristics are to be determined.
-
-    Returns:
-    Tuple: A tuple containing two lists - `roadWidths` and `roadColors`.
-        - `roadWidths` (list): List of edge widths corresponding to the edges in the graph.
-        - `roadColors` (list): List of edge colors corresponding to the edges in the graph.
+    Generate lists of edge widths and colors based on edge characteristics.
     """
-    # Define data characteristics
-    u = []
-    v = []
-    key = []
-    data = []
-    
-    # Extract edge data
-    for uu, vv, kkey, ddata in G.edges(keys=True, data=True):
-        u.append(uu)
-        v.append(vv)
-        key.append(kkey)
-        data.append(ddata)
-    
-    # Lists to store colors and widths
-    roadColors = []
-    roadWidths = []
+    data = [d for _, _, _, d in G.edges(keys=True, data=True)]
+    roadColors, roadWidths = [], []
 
     for item in data:
-        if "length" in item.keys():
-            if item["length"] <= 100:
-                linewidth = 0.10
-                color = "#a6a6a6" 
-
-            elif 100 < item["length"] <= 200:
-                linewidth = 0.15
-                color = "#676767"
-
-            elif 200 < item["length"] <= 400:
-                linewidth = 0.25
-                color = "#454545"
-
-            elif 400 < item["length"] <= 800:
-                color = "#bdbdbd"
-                linewidth = 0.35
+        if "length" in item:
+            length = item["length"]
+            if length <= 100:
+                linewidth, color = 0.10, "#a6a6a6"
+            elif length <= 200:
+                linewidth, color = 0.15, "#676767"
+            elif length <= 400:
+                linewidth, color = 0.25, "#454545"
+            elif length <= 800:
+                linewidth, color = 0.35, "#bdbdbd"
             else:
-                color = "#d5d5d5"
-                linewidth = 0.45
+                linewidth, color = 0.45, "#d5d5d5"
 
-            if "primary" in item.get("highway", ""):
-                linewidth = 0.5
-                color = "#ffff"
+            if "primary" in str(item.get("highway", "")):
+                linewidth, color = 0.5, "#ffffff"
         else:
-            color = "#a6a6a6"
-            linewidth = 0.10
+            linewidth, color = 0.10, "#a6a6a6"
 
         roadColors.append(color)
         roadWidths.append(linewidth)
 
+    # Ajuste extra para footways
     for item in data:
-        if "footway" in item.get("highway", ""):
-            color = "#ededed"
-            linewidth = 0.25
-        else:
-            color = "#a6a6a6"
-            linewidth = 0.5
-        roadWidths.append(linewidth)
+        if "footway" in str(item.get("highway", "")):
+            roadColors.append("#ededed")
+            roadWidths.append(0.25)
 
     return roadWidths, roadColors
+
+
 def linewidth(G):
     """
-    Generate lists of edge widths and a constant color based on characteristics of the graph edges.
-
-    Parameters:
-    - G (networkx.Graph): The graph for which edge characteristics are to be determined.
-
-    Returns:
-    Tuple: A tuple containing two lists - `roadWidths` and `roadColors`.
-        - `roadWidths` (list): List of edge widths corresponding to the edges in the graph.
+    Generate list of edge widths based on road lengths.
     """
-    # Define data characteristics
-    u = []
-    v = []
-    key = []
-    data = []
-    
-    # Extract edge data
-    for uu, vv, kkey, ddata in G.edges(keys=True, data=True):
-        u.append(uu)
-        v.append(vv)
-        key.append(kkey)
-        data.append(ddata)
-    
+    data = [d for _, _, _, d in G.edges(keys=True, data=True)]
     roadWidths = []
 
     for item in data:
-        if "length" in item.keys():
-            if item["length"] <= 100:
-                linewidth = 0.10
-            elif 100 < item["length"] <= 200:
-                linewidth = 0.15
-            elif 200 < item["length"] <= 400:
-                linewidth = 0.25
-            elif 400 < item["length"] <= 800:
-                linewidth = 0.35
+        if "length" in item:
+            length = item["length"]
+            if length <= 100:
+                lw = 0.10
+            elif length <= 200:
+                lw = 0.15
+            elif length <= 400:
+                lw = 0.25
+            elif length <= 800:
+                lw = 0.35
             else:
-                linewidth = 0.45
-
-            if "primary" in item.get("highway", ""):
-                linewidth = 0.5
+                lw = 0.45
+            if "primary" in str(item.get("highway", "")):
+                lw = 0.5
         else:
-            linewidth = 0.10
-
-        roadWidths.append(linewidth)
+            lw = 0.10
+        roadWidths.append(lw)
 
     return roadWidths
 
 
-def plot_figure(global_variable , route_df ,colorBackground , colorLines,colorRoute,title,colorText ):
-
+def plot_figure(global_variable, route_df, colorBackground, colorLines, colorRoute, title, colorText):
+    """
+    Plots a route on top of an OSM street graph.
+    """
     linewidths = linewidth(global_variable)
-    fig, ax = ox.plot_graph(global_variable, node_size=0,
-                        figsize        = (27, 40), 
-                        dpi            = 300,
-                        save           = False,
-                        bgcolor        = colorBackground,
-                        edge_color     = colorLines,
-                        edge_alpha     = 1 ,
-                        show           = False,
-                        edge_linewidth = linewidths)
-    
-## Plot  activity in graph 
-    ax.plot( route_df['longitude'] , route_df['latitude'] ,
-               color     = colorRoute , 
-               linewidth = 4.0)
-      #bbox={'facecolor': '#415DC0', 'edgecolor': '#415DC0', 'pad': 5}
-    ax.text(0.5, 0.03, title, ha='center', 
-            va='center', transform=ax.transAxes, fontsize=40 ,color = colorText,
-            bbox=dict(facecolor=colorBackground , edgecolor = colorBackground, alpha=0.5))
+    fig, ax = ox.plot_graph(
+        global_variable,
+        node_size=0,
+        figsize=(27, 40),
+        dpi=300,
+        save=False,
+        bgcolor=colorBackground,
+        edge_color=colorLines,
+        edge_alpha=1,
+        show=False,
+        edge_linewidth=linewidths,
+    )
+
+    # Dibujar la ruta sobre el gráfico
+    ax.plot(
+        route_df["longitude"],
+        route_df["latitude"],
+        color=colorRoute,
+        linewidth=4.0,
+    )
+
+    # Agregar el título
+    ax.text(
+        0.5,
+        0.03,
+        title,
+        ha="center",
+        va="center",
+        transform=ax.transAxes,
+        fontsize=40,
+        color=colorText,
+        bbox=dict(facecolor=colorBackground, edgecolor=colorBackground, alpha=0.5),
+    )
 
     return fig
