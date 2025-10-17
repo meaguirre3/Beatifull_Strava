@@ -8,7 +8,6 @@ import osmnx as ox
 import io
 from PIL import Image
 
-st.set_option('deprecation.showPyplotGlobalUse', False)
 
 st.title(' Beatifull Strava')
 
